@@ -13,10 +13,8 @@ def plot_days():
     grouped_weights = {}
 
     for i in all_weights:
-        if grouped_weights.get(i["date-stamp"].date()) is None:
-            grouped_weights[i["date-stamp"].date()] = [i["weight"]]
-        else:
-            grouped_weights[i["date-stamp"].date()].append(i["weight"])
+        grouped_weights.setdefault(i["date-stamp"].date(), [])
+        grouped_weights[i["date-stamp"].date()].append(i["weight"])
 
     dates = []
     average_weights = []
@@ -39,10 +37,15 @@ def plot_weeks():
     while list(grouped_weights.keys())[-1] < max(all_dates) - datetime.timedelta(days=7):
         grouped_weights[list(grouped_weights.keys())[-1] + datetime.timedelta(days=7)] = []
 
+    i = 0
     for date_weight in all_weights:
-        for week_bin in grouped_weights.keys():
-            if week_bin <= date_weight["date-stamp"].date() < week_bin + datetime.timedelta(days=7):
-                grouped_weights[week_bin].append(date_weight["weight"])
+        week_bin = list(grouped_weights.keys())[i]
+        next_week_bin = week_bin + datetime.timedelta(days=7)
+        if date_weight["date-stamp"].date() < next_week_bin:
+            grouped_weights[week_bin].append(date_weight["weight"])
+        else:
+            grouped_weights[next_week_bin].append(date_weight["weight"])
+            i += 1
 
     dates = []
     average_weights = []
@@ -75,7 +78,7 @@ def plot(date_times, weights):
     plt.tight_layout()
     plt.gcf().subplots_adjust(bottom=0.20)
 
-    scale_factor = 1.05
+    scale_factor = 1.025
     y_min, y_max = plt.ylim()
     plt.ylim(y_min / scale_factor, y_max * scale_factor)
 
@@ -90,6 +93,9 @@ def plot(date_times, weights):
 
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
     _ = plt.xticks(rotation=45)
+
+    plt.grid(linestyle='--')
+
     plt.show()
 
 
